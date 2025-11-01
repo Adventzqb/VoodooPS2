@@ -166,10 +166,10 @@ bool ApplePS2Keyboard::init(OSDictionary * dict)
     _ledState                  = 0;
     _lastdata = 0;
     
-    _remapPrntScr = false;
-    _numLockSupport = false;
-    _numLockOnAtBoot = false;
-    _swapcommandoption = false;
+    _remapPrntScr = true;
+    _numLockSupport = true;
+    _numLockOnAtBoot = true;
+    _swapcommandoption = true;
     _sleepEjectTimer = 0;
     _cmdGate = 0;
     
@@ -819,7 +819,7 @@ void ApplePS2Keyboard::setParamPropertiesGated(OSDictionary * dict)
     xml = OSDynamicCast(OSBoolean, dict->getObject(kUseISOLayoutKeyboard));
     if (xml) {
         if (xml->isTrue()) {
-            _PS2ToADBMap[0x29]  = _PS2ToADBMapMapped[0x56];     //Europe2 '¤º'
+            _PS2ToADBMap[0x29]  = _PS2ToADBMapMapped[0x56];     //Europe2 'Â¤Âº'
             _PS2ToADBMap[0x56]  = _PS2ToADBMapMapped[0x29];     //Grave '~'
         }
         else {
@@ -1493,12 +1493,12 @@ bool ApplePS2Keyboard::dispatchKeyboardEventWithPacket(const UInt8* packet)
     switch (keyCode)
     {
         case 0x45:  // NumLock
-            if (_numLockSupport && (scanCode == 0xc5)) // NumLock -> Up
+            if (_numLockSupport && (scanCode == 0x45)) // NumLock -> Up
             {
                 setNumLock(!numLock());
                 return true;
             }
-            else if (_numLockSupport && (scanCode == 0x45)) // NumLock -> Down
+            else if (_numLockSupport && (scanCode == 0xc5)) // NumLock -> Down
                 return false;
             break;
             
