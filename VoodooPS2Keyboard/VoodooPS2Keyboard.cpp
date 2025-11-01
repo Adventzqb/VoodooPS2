@@ -1493,12 +1493,12 @@ bool ApplePS2Keyboard::dispatchKeyboardEventWithPacket(const UInt8* packet)
     switch (keyCode)
     {
         case 0x45:  // NumLock
-            if (_numLockSupport && (scanCode == 0x45)) // NumLock -> Up
+            if (_numLockSupport && (scanCode == 0xc5)) // NumLock -> Up
             {
                 setNumLock(!numLock());
                 return true;
             }
-            else if (_numLockSupport && (scanCode == 0xc5)) // NumLock -> Down
+            else if (_numLockSupport && (scanCode == 0x45)) // NumLock -> Down
                 return false;
             break;
             
