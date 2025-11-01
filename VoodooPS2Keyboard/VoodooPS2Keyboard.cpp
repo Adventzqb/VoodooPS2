@@ -166,10 +166,11 @@ bool ApplePS2Keyboard::init(OSDictionary * dict)
     _ledState                  = 0;
     _lastdata = 0;
     
-    _remapPrntScr = true;
-    _numLockSupport = true;
-    _numLockOnAtBoot = true;
-    _swapcommandoption = true;
+    _remapPrntScr = false;
+    _numLockSupport = false;
+    _numLockOnAtBoot = false;
+    _swapcommandoption = false;
+	_numKeypadLocked = true;
     _sleepEjectTimer = 0;
     _cmdGate = 0;
     
@@ -1464,6 +1465,8 @@ bool ApplePS2Keyboard::dispatchKeyboardEventWithPacket(const UInt8* packet)
         {
             case 0x012a: // header or trailer for PrintScreen
                 return false;
+			case 0x45: // num lock remapping
+				keyCode =0;
         }
     }
     
@@ -2212,7 +2215,7 @@ void ApplePS2Keyboard::initKeyboard()
     //
     // Reset the keyboard to its default state.
     //
-
+	set numlock feedback(numkey padlocked);
     TPS2Request<2> request;
     request.commands[0].command = kPS2C_WriteDataPort;
     request.commands[0].inOrOut = kDP_SetDefaults;
