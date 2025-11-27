@@ -819,7 +819,7 @@ void ApplePS2Keyboard::setParamPropertiesGated(OSDictionary * dict)
     xml = OSDynamicCast(OSBoolean, dict->getObject(kUseISOLayoutKeyboard));
     if (xml) {
         if (xml->isTrue()) {
-            _PS2ToADBMap[0x29]  = _PS2ToADBMapMapped[0x56];     //Europe2 '¤º'
+            _PS2ToADBMap[0x29]  = _PS2ToADBMapMapped[0x56];     //Europe2 'Â¤Âº'
             _PS2ToADBMap[0x56]  = _PS2ToADBMapMapped[0x29];     //Grave '~'
         }
         else {
@@ -1499,7 +1499,7 @@ bool ApplePS2Keyboard::dispatchKeyboardEventWithPacket(const UInt8* packet)
                 return true;
             }
             else if (_numLockSupport && (scanCode == 0x45)) // NumLock -> Down
-                return false;
+                return true;
             break;
             
         case 0x4e:  // Numpad+
@@ -1539,9 +1539,9 @@ bool ApplePS2Keyboard::dispatchKeyboardEventWithPacket(const UInt8* packet)
                     //  receiving an ADB 0x7f (power button), it will unconditionaly and unsafely
                     //  reboot the computer, much like the old PC/AT Ctrl+Alt+Delete!
                     // That's why we make sure Control (0x3b) and Alt (0x37) are up!!
-                    dispatchKeyboardEventX(0x37, false, now_abs);
-                    dispatchKeyboardEventX(0x3b, false, now_abs);
-                    dispatchKeyboardEventX(0x7f, true, now_abs);
+                    dispatchKeyboardEventX(0x37, true, now_abs);
+                    dispatchKeyboardEventX(0x3b, true, now_abs);
+                    dispatchKeyboardEventX(0x75, true, now_abs);
                     dispatchKeyboardEventX(0x7f, false, now_abs);
                 }
             }
