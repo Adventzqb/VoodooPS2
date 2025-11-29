@@ -169,7 +169,6 @@ bool ApplePS2Keyboard::init(OSDictionary * dict)
     _remapPrntScr = false;
     _numLockSupport = false;
     _numLockOnAtBoot = false;
-	_numKeypadLocked = true;
     _swapcommandoption = false;
     _sleepEjectTimer = 0;
     _cmdGate = 0;
@@ -820,7 +819,7 @@ void ApplePS2Keyboard::setParamPropertiesGated(OSDictionary * dict)
     xml = OSDynamicCast(OSBoolean, dict->getObject(kUseISOLayoutKeyboard));
     if (xml) {
         if (xml->isTrue()) {
-            _PS2ToADBMap[0x29]  = _PS2ToADBMapMapped[0x56];     //Europe2 'Â¤Âº'
+            _PS2ToADBMap[0x29]  = _PS2ToADBMapMapped[0x56];     //Europe2 '¤º'
             _PS2ToADBMap[0x56]  = _PS2ToADBMapMapped[0x29];     //Grave '~'
         }
         else {
@@ -1493,45 +1492,14 @@ bool ApplePS2Keyboard::dispatchKeyboardEventWithPacket(const UInt8* packet)
     // handle special cases
     switch (keyCode)
     {
-         case 0x45:  //num lock remapping
-            keyCode = 0;
-
-            //NUM LOCK fix For DELL Precision M4800
-            if(goingDown)
+        case 0x45:  // NumLock
+            if (scanCode != 0xc5) // NumLock -> Up
             {
-                setNumLockFeedback(_numKeypadLocked);
-                _numKeypadLocked = !_numKeypadLocked;
+                setNumLock(!numLock());
+                return true;
             }
-
-            // remap NUM PAD by NUMLOCK LED status
-            if(!_numKeypadLocked)
-            {
-                _PS2ToADBMap[0x48] = 0x5b;     // 8 up arrow
-                _PS2ToADBMap[0x50] = 0x54;     // 2 down arrow
-                _PS2ToADBMap[0x4B] = 0x56;     // 4 left arrow
-                _PS2ToADBMap[0x4D] = 0x58;     // 6 right arrow
-                _PS2ToADBMap[0x52] = 0x52;     // 0 insert / CDROM inject
-                _PS2ToADBMap[0x53] = 0x41;     // . delete
-                _PS2ToADBMap[0x49] = 0x5c;     // 9 page up
-                _PS2ToADBMap[0x51] = 0x55;     // 3 page down
-                _PS2ToADBMap[0x47] = 0x59;     // 7 home
-                _PS2ToADBMap[0x4F] = 0x53;     // 1 end
-                
-            }
-            else
-            {
-                _PS2ToADBMap[0x48] = 0x7e;      // 8 up arrow
-                _PS2ToADBMap[0x50] = 0x7d;      // 2 down arrow
-                _PS2ToADBMap[0x4B] = 0x7b;      // 4 left arrow
-                _PS2ToADBMap[0x4D] = 0x7c;      // 6 right arrow
-                _PS2ToADBMap[0x52] = 0x92;      // 0 insert / CDROM inject
-                _PS2ToADBMap[0x53] = 0x75;      // . delete
-                _PS2ToADBMap[0x49] = 0x74;      // 9 page up
-                _PS2ToADBMap[0x51] = 0x79;      // 3 page down
-                _PS2ToADBMap[0x47] = 0x73;      // 7 home
-                _PS2ToADBMap[0x4F] = 0x77;      // 1 end
-
-            }
+            else if (scanCode != 0x45) // NumLock -> Down
+                return false;
             break;
             
         case 0x4e:  // Numpad+
@@ -1571,9 +1539,9 @@ bool ApplePS2Keyboard::dispatchKeyboardEventWithPacket(const UInt8* packet)
                     //  receiving an ADB 0x7f (power button), it will unconditionaly and unsafely
                     //  reboot the computer, much like the old PC/AT Ctrl+Alt+Delete!
                     // That's why we make sure Control (0x3b) and Alt (0x37) are up!!
-                    dispatchKeyboardEventX(0x37, true, now_abs);
-                    dispatchKeyboardEventX(0x3b, true, now_abs);
-                    dispatchKeyboardEventX(0x75, true, now_abs);
+                    dispatchKeyboardEventX(0x37, false, now_abs);
+                    dispatchKeyboardEventX(0x3b, false, now_abs);
+                    dispatchKeyboardEventX(0x7f, true, now_abs);
                     dispatchKeyboardEventX(0x7f, false, now_abs);
                 }
             }
@@ -1617,25 +1585,6 @@ bool ApplePS2Keyboard::dispatchKeyboardEventWithPacket(const UInt8* packet)
 #endif
             
             // Fall to the original PrntScr handling case
-        }
-		case 0x0164:    // fn+f3 (msi GE60)
-        {
-            unsigned origKeyCode = keyCode;
-            keyCode = 0;
-            if (!goingDown)
-                break;
-            if (!checkModifierState(kMaskLeftControl))
-            {
-                // get current enabled status, and toggle it
-                bool enabled;
-                _device->dispatchMouseMessage(kPS2M_getDisableTouchpad, &enabled);
-                enabled = !enabled;
-                _device->dispatchMouseMessage(kPS2M_setDisableTouchpad, &enabled);
-                break;
-            }
-            if (origKeyCode != 0x0164)
-                break; // do not fall through for 0x0128
-            // fall through
         }
         case 0x0137:    // prt sc/sys rq
         {
@@ -2263,7 +2212,7 @@ void ApplePS2Keyboard::initKeyboard()
     //
     // Reset the keyboard to its default state.
     //
-	
+
     TPS2Request<2> request;
     request.commands[0].command = kPS2C_WriteDataPort;
     request.commands[0].inOrOut = kDP_SetDefaults;
